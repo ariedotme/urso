@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "urso",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Tag and property explorer with pins, icons, and responsive layouts.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {

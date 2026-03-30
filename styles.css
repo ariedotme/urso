@@ -1,8 +1,529 @@
-/*
+.workspace-leaf-content[data-type="urso-view"] {
+	--urso-surface: var(--background-secondary);
+	--urso-border: var(--background-modifier-border);
+	--urso-hover: var(--background-modifier-hover);
+	--urso-selected: var(--background-modifier-active-hover);
+	--urso-muted: var(--text-muted);
+	--urso-accent: var(--text-accent);
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.workspace-leaf-content[data-type="urso-view"] .view-content {
+	background: var(--urso-surface);
+}
 
-If your plugin does not need CSS, delete this file.
+.urso-tags-view-host,
+.urso-tags-view {
+	height: 100%;
+	min-height: 0;
+}
 
-*/
+.urso-tags-view {
+	--urso-left-pane-size: 40%;
+	display: flex;
+	background: var(--urso-surface);
+}
+
+.urso-tags-pane {
+	min-width: 0;
+	min-height: 0;
+	display: flex;
+	flex: 1 1 0;
+	flex-direction: column;
+}
+
+.urso-tags-pane-left {
+	flex: 0 0 var(--urso-left-pane-size);
+}
+
+.urso-tags-pane-right {
+	flex: 1 1 auto;
+}
+
+.urso-tags-splitter {
+	flex: 0 0 10px;
+	position: relative;
+	cursor: col-resize;
+	touch-action: none;
+}
+
+.urso-tags-splitter::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	margin: 0 auto;
+	width: 1px;
+	background: var(--urso-border);
+}
+
+.urso-tags-splitter:hover::before,
+.urso-tags-view.is-resizing .urso-tags-splitter::before {
+	background: var(--urso-accent);
+}
+
+.urso-tags-header,
+.urso-notes-header {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 12px 14px;
+	font-size: 0.9rem;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	background: var(--urso-surface);
+	border-bottom: 1px solid var(--urso-border);
+}
+
+.urso-tags-header-title {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.urso-pane-header-main {
+	min-width: 0;
+	flex: 1 1 auto;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.urso-pane-back-button {
+	flex: 0 0 auto;
+}
+
+.urso-pane-switcher-button {
+	flex: 0 0 auto;
+}
+
+.urso-tags-header-actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.urso-tags-header-button {
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	color: var(--urso-muted);
+}
+
+.urso-tags-header-button svg.svg-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.urso-tags-header-button:hover {
+	color: var(--text-normal);
+	background: transparent;
+}
+
+.urso-tags-tree,
+.urso-notes-list {
+	flex: 1 1 auto;
+	overflow: auto;
+	padding: 8px 0;
+}
+
+.urso-tags-row,
+.urso-note-row {
+	margin: 0 8px;
+	padding: 8px 10px;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.urso-tags-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	justify-content: space-between;
+}
+
+.urso-tags-main {
+	min-width: 0;
+	flex: 1 1 auto;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.urso-tags-disclosure {
+	width: 18px;
+	height: 18px;
+	padding: 0;
+	flex: 0 0 18px;
+	color: var(--urso-muted);
+}
+
+.urso-tags-disclosure svg.svg-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.urso-tags-disclosure:hover {
+	color: var(--text-normal);
+	background: transparent;
+}
+
+.urso-tags-disclosure.is-hidden {
+	visibility: hidden;
+	pointer-events: none;
+}
+
+.urso-tags-icon {
+	width: 18px;
+	height: 18px;
+	flex: 0 0 18px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--urso-muted);
+}
+
+.urso-tags-icon svg.svg-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.urso-tags-icon.is-empty {
+	visibility: hidden;
+}
+
+.urso-tags-row:hover,
+.urso-note-row:hover {
+	background: var(--urso-hover);
+}
+
+.urso-tags-row.is-selected {
+	background: var(--urso-selected);
+}
+
+.urso-tags-view--underline-pinned .urso-tags-row.is-pinned .urso-tags-label,
+.urso-tags-view--underline-pinned .urso-note-row.is-pinned .urso-note-title {
+	text-decoration-line: underline;
+	text-decoration-color: var(--urso-accent);
+	text-decoration-thickness: 1.5px;
+	text-underline-offset: 0.2em;
+}
+
+.urso-tags-label-group {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+
+.urso-tags-label,
+.urso-note-title,
+.urso-note-secondary {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.urso-tags-label.is-special {
+	color: var(--urso-accent);
+	font-weight: 600;
+}
+
+.urso-tags-count {
+	flex: 0 0 auto;
+	font-size: 0.8rem;
+	color: var(--urso-muted);
+}
+
+.urso-note-row {
+	display: block;
+}
+
+.urso-note-main {
+	min-width: 0;
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+}
+
+.urso-note-icon {
+	width: 18px;
+	height: 18px;
+	flex: 0 0 18px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--urso-muted);
+}
+
+.urso-note-icon svg.svg-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.urso-note-icon.is-empty {
+	visibility: hidden;
+}
+
+.urso-note-text {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+
+.urso-note-title {
+	font-weight: 600;
+}
+
+.urso-note-secondary {
+	margin-top: 4px;
+	font-size: 0.8rem;
+	color: var(--urso-muted);
+}
+
+.urso-empty-state {
+	padding: 16px 14px;
+	color: var(--urso-muted);
+}
+
+.urso-empty-title {
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.urso-empty-description {
+	margin-top: 4px;
+	font-size: 0.9rem;
+	line-height: 1.4;
+}
+
+.urso-tags-view.is-resizing,
+.urso-tags-view.is-resizing * {
+	cursor: col-resize;
+	user-select: none;
+}
+
+.urso-tags-view.is-phone-layout {
+	display: block;
+}
+
+.urso-tags-view.is-phone-layout .urso-tags-pane {
+	height: 100%;
+}
+
+.urso-tags-view.is-phone-layout .urso-tags-pane-left,
+.urso-tags-view.is-phone-layout .urso-tags-pane-right {
+	flex: 1 1 auto;
+}
+
+.urso-icon-picker {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.urso-icon-picker-search-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.urso-icon-picker-search {
+	flex: 1 1 auto;
+}
+
+.urso-icon-picker-search input {
+	width: 100%;
+}
+
+.urso-icon-picker-results {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	max-height: 320px;
+	overflow: auto;
+}
+
+.urso-icon-picker-result {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 8px 10px;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--text-normal);
+	text-align: left;
+	cursor: pointer;
+}
+
+.urso-icon-picker-result:hover,
+.urso-icon-picker-result.is-current {
+	background: var(--background-modifier-hover);
+}
+
+.urso-icon-picker-preview {
+	width: 18px;
+	height: 18px;
+	flex: 0 0 18px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-muted);
+}
+
+.urso-icon-picker-preview svg.svg-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.urso-icon-picker-name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.urso-icon-picker-empty {
+	padding: 8px 2px;
+	color: var(--text-muted);
+}
+
+.urso-hidden-tags-manager {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.urso-hidden-tags-search-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.urso-hidden-tags-search {
+	flex: 1 1 auto;
+}
+
+.urso-hidden-tags-search input {
+	width: 100%;
+}
+
+.urso-hidden-tags-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	max-height: 320px;
+	overflow: auto;
+}
+
+.urso-hidden-tags-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 8px 10px;
+	border-radius: 8px;
+	background: var(--background-primary-alt);
+}
+
+.urso-hidden-tags-name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.urso-hidden-tags-remove {
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	flex: 0 0 22px;
+	color: var(--text-muted);
+}
+
+.urso-hidden-tags-remove:hover {
+	color: var(--text-normal);
+}
+
+.urso-hidden-tags-empty {
+	padding: 8px 2px;
+	color: var(--text-muted);
+}
+
+.urso-tracked-properties-manager,
+.urso-tracked-properties-editor {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.urso-tracked-properties-toolbar,
+.urso-tracked-properties-editor-actions {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.urso-tracked-properties-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	max-height: 320px;
+	overflow: auto;
+}
+
+.urso-tracked-properties-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 12px;
+	border-radius: 8px;
+	background: var(--background-primary-alt);
+}
+
+.urso-tracked-properties-details {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+
+.urso-tracked-properties-name,
+.urso-tracked-properties-mode {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.urso-tracked-properties-name {
+	font-weight: 600;
+}
+
+.urso-tracked-properties-mode {
+	margin-top: 4px;
+	font-size: 0.8rem;
+	color: var(--text-muted);
+}
+
+.urso-tracked-properties-actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.urso-tracked-properties-action {
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	flex: 0 0 22px;
+	color: var(--text-muted);
+}
+
+.urso-tracked-properties-action:hover {
+	color: var(--text-normal);
+}
+
+.urso-tracked-properties-empty {
+	padding: 8px 2px;
+	color: var(--text-muted);
+}
