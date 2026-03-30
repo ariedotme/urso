@@ -4,7 +4,8 @@ Urso is an Obsidian tag and property explorer. It turns slash tags like `#world/
 
 > This plugin was created for personal use, but feel free to open suggestions and bug reports as issues on this repo.
 
-Features:
+## Features:
+
 - Hierarchical tag tree with collapse/expand controls
 - Properties view with configurable tracked properties and optional value sub-categories
 - Notes list with configurable sorting and date display
