@@ -454,10 +454,7 @@ export class UrsoView extends ItemView {
 		setIcon(iconEl, iconName);
 	}
 
-	private renderPropertyIcon(
-		container: HTMLElement,
-		node: PropertyNode,
-	): void {
+	private renderPropertyIcon(container: HTMLElement, node: PropertyNode): void {
 		const iconName = this.plugin.getPropertyIcon(node.key);
 		const iconEl = container.createDiv({
 			cls: ["urso-tags-icon", iconName ? "" : "is-empty"],
@@ -590,11 +587,7 @@ export class UrsoView extends ItemView {
 
 	private renderPropertyNotesPanel(container: HTMLElement): void {
 		if (this.plugin.settings.trackedProperties.length === 0) {
-			this.renderEmptyState(
-				container,
-				"Select a property.",
-				"Choose a property in the left pane to browse matching notes.",
-			);
+			this.renderEmptyState(container, "Select a property.", "Choose a property in the left pane to browse matching notes.");
 			return;
 		}
 
@@ -866,10 +859,7 @@ export class UrsoView extends ItemView {
 		return mode === "tags" ? this.selectedTagKey : this.selectedPropertyKey;
 	}
 
-	private setSelectedKeyForMode(
-		mode: PrimaryViewMode,
-		key: string | null,
-	): void {
+	private setSelectedKeyForMode(mode: PrimaryViewMode, key: string | null): void {
 		if (mode === "tags") {
 			this.selectedTagKey = key;
 			return;
