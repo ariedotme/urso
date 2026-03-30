@@ -1,4 +1,4 @@
-import { Debouncer, debounce, moment, normalizePath, Notice, Platform, Plugin, TFile, TFolder, WorkspaceLeaf } from "obsidian";
+import { Debouncer, debounce, moment, normalizePath, Notice, Plugin, TFile, TFolder, WorkspaceLeaf } from "obsidian";
 import {
 	CreateNoteContext,
 	IndexedTagData,
@@ -65,18 +65,6 @@ export default class UrsoPlugin extends Plugin {
 		this.addCommand({
 			id: "create-note-in-selected-tag",
 			name: "Create note in selected tag or property",
-			// eslint-disable-next-line obsidianmd/commands/no-default-hotkeys
-			hotkeys: [
-				Platform.isMacOS
-					? {
-							modifiers: ["Mod", "Ctrl"],
-							key: "n",
-						}
-					: {
-							modifiers: ["Ctrl", "Alt"],
-							key: "n",
-						},
-			],
 			callback: () => {
 				void this.createNoteInSelectedContext();
 			},

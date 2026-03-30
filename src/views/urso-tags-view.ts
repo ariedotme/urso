@@ -98,11 +98,14 @@ export class UrsoView extends ItemView {
 		};
 	}
 
-	async onOpen(): Promise<void> {
+	onOpen(): Promise<void> {
 		this.render();
+		return Promise.resolve();
 	}
 
-	async onClose(): Promise<void> {}
+	onClose(): Promise<void> {
+		return Promise.resolve();
+	}
 
 	refresh(): void {
 		const visibleTagTree = this.getVisibleTagTree();
