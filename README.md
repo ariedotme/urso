@@ -15,3 +15,12 @@ Urso is an Obsidian tag and property explorer. It turns slash tags like `#world/
 - Resizable split view on desktop and tablet
 - Single-pane navigation on phones, with optional tablet mobile layout
 - Hotkey to create a new note with the selected tag/property
+
+## How to use
+
+- Open the Urso view from the ribbon icon or command palette.
+- Browse tags in a hierarchical tree, including slash tags such as `#world/region/place`.
+- Switch to the properties view to explore tracked frontmatter properties.
+- Select a tag or property to see matching notes beside it.
+- Pin frequently used tags, properties, or notes for faster access.
+- Use the command to create a new note from the currently selected tag or property.
