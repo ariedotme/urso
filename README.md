@@ -2,8 +2,6 @@
 
 Urso is an Obsidian tag and property explorer. It turns slash tags like `#world/region/place` into a navigable tree, lets you track frontmatter properties as a second primary view, and shows the matching notes beside the current selection.
 
-> This plugin was created for personal use, but feel free to open suggestions and bug reports as issues on this repo.
-
 ## Features:
 
 - Hierarchical tag tree with collapse/expand controls
