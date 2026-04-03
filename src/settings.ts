@@ -6,6 +6,7 @@ import { TrackedPropertiesModal } from "./tracked-properties-modal";
 import { UrsoPluginSettings } from "./models";
 
 export const DEFAULT_SETTINGS: UrsoPluginSettings = {
+	focusFirstNoteOnEnter: false,
 	hiddenTags: [],
 	inheritanceMode: "include-ancestors",
 	pinnedNotes: {},
@@ -140,6 +141,16 @@ export class UrsoSettingTab extends PluginSettingTab {
 						);
 						await this.commit();
 					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Focus first note on enter")
+			.setDesc("When you select a tag or property, immediately open and focus the first note in that list.")
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.focusFirstNoteOnEnter).onChange(async (value) => {
+					this.plugin.settings.focusFirstNoteOnEnter = value;
+					await this.commit();
+				}),
 			);
 
 		noteDateFormatSetting = new Setting(containerEl)

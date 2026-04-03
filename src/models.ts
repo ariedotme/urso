@@ -37,6 +37,7 @@ export interface UrsoPluginSettings {
 	noteIcons: Record<string, string>;
 	noteSecondaryLineMode: NotesSecondaryLineMode;
 	notesSortOrder: NotesSortOrder;
+	focusFirstNoteOnEnter: boolean;
 	primaryViewMode: PrimaryViewMode;
 	propertyIcons: Record<string, string>;
 	splitPaneRatio: number;

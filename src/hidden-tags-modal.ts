@@ -1,4 +1,13 @@
-import { AbstractInputSuggest, App, ButtonComponent, Modal, Notice, setIcon, TextComponent } from "obsidian";
+import {
+	AbstractInputSuggest,
+	App,
+	ButtonComponent,
+	Modal,
+	Notice,
+	setIcon,
+	Setting,
+	TextComponent,
+} from "obsidian";
 import type UrsoPlugin from "./main";
 
 interface HiddenTagSuggestion {
@@ -42,17 +51,111 @@ class HiddenTagSuggest extends AbstractInputSuggest<HiddenTagSuggestion> {
 	}
 
 	selectSuggestion(value: HiddenTagSuggestion): void {
-		this.text.setValue("");
+		this.text.setValue(value.tagKey);
 		this.onChooseTag(value.tagKey);
 		this.close();
 	}
 }
 
-export class HiddenTagsModal extends Modal {
-	private hiddenTagsEl: HTMLElement | null = null;
+class HiddenTagEditorModal extends Modal {
+	private tagKey = "";
 	private input: TextComponent | null = null;
 	private suggest: HiddenTagSuggest | null = null;
-	private query = "";
+
+	constructor(
+		app: App,
+		private readonly plugin: UrsoPlugin,
+		private readonly options: {
+			initialValue?: string;
+			onSaved: () => void;
+		},
+	) {
+		super(app);
+		this.tagKey = options.initialValue ?? "";
+	}
+
+	onOpen(): void {
+		this.setTitle(this.options.initialValue ? "Edit hidden tag" : "Add hidden tag");
+		this.modalEl.addClass("urso-hidden-tags-modal");
+
+		const wrapper = this.contentEl.createDiv({ cls: "urso-hidden-tags-editor" });
+		wrapper.createDiv({
+			cls: "setting-item-description",
+			text: "Hidden tags are blacklisted from the tag tree, even if they do not currently exist in the vault.",
+		});
+
+		new Setting(wrapper)
+			.setName("Tag name")
+			.setDesc("Use an existing tag or type a tag path to keep hidden.")
+			.addText((text) => {
+				this.input = text;
+				text.setPlaceholder("Tag name").setValue(this.tagKey).onChange((value) => {
+					this.tagKey = value.trim();
+				});
+
+				text.inputEl.addEventListener("keydown", (event) => {
+					if (event.key === "Enter") {
+						event.preventDefault();
+						void this.save();
+					}
+				});
+
+				return text;
+			});
+
+		if (this.input) {
+			this.suggest = new HiddenTagSuggest(
+				this.app,
+				this.input,
+				() => this.getAvailableTagKeys(),
+				(tagKey) => {
+					this.tagKey = tagKey;
+				},
+			);
+		}
+
+		const actions = wrapper.createDiv({ cls: "urso-hidden-tags-editor-actions" });
+		const saveButton = new ButtonComponent(actions);
+		saveButton.setButtonText(this.options.initialValue ? "Save" : "Add");
+		saveButton.setCta();
+		saveButton.onClick(() => {
+			void this.save();
+		});
+	}
+
+	onClose(): void {
+		this.suggest?.close();
+		this.suggest = null;
+		this.contentEl.empty();
+	}
+
+	private getAvailableTagKeys(): string[] {
+		const hiddenTags = new Set(this.plugin.getHiddenTags());
+		if (this.options.initialValue) {
+			hiddenTags.delete(this.options.initialValue);
+		}
+
+		return this.plugin.getManageableTagKeys().filter((tagKey) => !hiddenTags.has(tagKey));
+	}
+
+	private async save(): Promise<void> {
+		if (!this.tagKey) {
+			new Notice("Enter a tag name.");
+			return;
+		}
+
+		const didSave = await this.plugin.upsertHiddenTag(this.tagKey, this.options.initialValue);
+		if (!didSave) {
+			return;
+		}
+
+		this.options.onSaved();
+		this.close();
+	}
+}
+
+export class HiddenTagsModal extends Modal {
+	private listEl: HTMLElement | null = null;
 
 	constructor(app: App, private readonly plugin: UrsoPlugin) {
 		super(app);
@@ -65,124 +168,86 @@ export class HiddenTagsModal extends Modal {
 		const wrapper = this.contentEl.createDiv({ cls: "urso-hidden-tags-manager" });
 		wrapper.createDiv({
 			cls: "setting-item-description",
-			text: "Hidden tags are removed from the explorer tree until you unhide them here.",
+			text: "Hidden tags are blacklisted from the tag tree. They stay in this list even if the tag does not currently exist in your vault.",
 		});
 
-		const searchRow = wrapper.createDiv({ cls: "urso-hidden-tags-search-row" });
-		const inputContainer = searchRow.createDiv({ cls: "urso-hidden-tags-search" });
-		const input = new TextComponent(inputContainer);
-		input.setPlaceholder("Search tags to hide");
-		input.onChange((value) => {
-			this.query = value.trim();
-		});
-		input.inputEl.addEventListener("keydown", (event) => {
-			if (event.key === "Enter") {
-				event.preventDefault();
-				void this.addFromQuery();
-			}
-		});
-		this.input = input;
-
-		const hideButton = new ButtonComponent(searchRow);
-		hideButton.setButtonText("Hide");
-		hideButton.onClick(() => {
-			void this.addFromQuery();
+		const toolbar = wrapper.createDiv({ cls: "urso-hidden-tags-toolbar" });
+		const addButton = new ButtonComponent(toolbar);
+		addButton.setButtonText("Add tag");
+		addButton.setCta();
+		addButton.onClick(() => {
+			this.openEditor();
 		});
 
-		this.suggest = new HiddenTagSuggest(this.app, input, () => this.getAvailableTagKeys(), (tagKey) => {
-			void this.addHiddenTag(tagKey);
-		});
-
-		this.hiddenTagsEl = wrapper.createDiv({ cls: "urso-hidden-tags-list" });
+		this.listEl = wrapper.createDiv({ cls: "urso-hidden-tags-list" });
 		this.renderHiddenTags();
-
-		window.setTimeout(() => {
-			input.inputEl.focus();
-			input.inputEl.select();
-		}, 0);
 	}
 
 	onClose(): void {
-		this.suggest?.close();
-		this.suggest = null;
 		this.contentEl.empty();
 	}
 
-	private getAvailableTagKeys(): string[] {
-		const hiddenTags = new Set(this.plugin.settings.hiddenTags);
-		return this.plugin.getManageableTagKeys().filter((tagKey) => !hiddenTags.has(tagKey));
-	}
-
-	private resolveTagFromQuery(query: string): string | null {
-		const normalizedQuery = query.trim().toLowerCase();
-		if (!normalizedQuery) {
-			return null;
-		}
-
-		const availableTagKeys = this.getAvailableTagKeys();
-		const exactMatch = availableTagKeys.find((tagKey) => tagKey.toLowerCase() === normalizedQuery);
-		if (exactMatch) {
-			return exactMatch;
-		}
-
-		const startsWithMatch = availableTagKeys.find((tagKey) => tagKey.toLowerCase().startsWith(normalizedQuery));
-		if (startsWithMatch) {
-			return startsWithMatch;
-		}
-
-		return availableTagKeys.find((tagKey) => tagKey.toLowerCase().includes(normalizedQuery)) ?? null;
-	}
-
-	private async addFromQuery(): Promise<void> {
-		const tagKey = this.resolveTagFromQuery(this.query);
-		if (!tagKey) {
-			new Notice("No matching tag found.");
-			return;
-		}
-
-		await this.addHiddenTag(tagKey);
-	}
-
-	private async addHiddenTag(tagKey: string): Promise<void> {
-		await this.plugin.hideTag(tagKey);
-		this.query = "";
-		this.input?.setValue("");
-		this.renderHiddenTags();
-	}
-
 	private renderHiddenTags(): void {
-		if (!this.hiddenTagsEl) {
+		if (!this.listEl) {
 			return;
 		}
 
-		this.hiddenTagsEl.empty();
+		this.listEl.empty();
 
-		const hiddenTags = [...this.plugin.settings.hiddenTags].sort((left, right) => left.localeCompare(right));
+		const hiddenTags = this.plugin.getHiddenTags();
 		if (hiddenTags.length === 0) {
-			this.hiddenTagsEl.createDiv({
+			this.listEl.createDiv({
 				cls: "urso-hidden-tags-empty",
-				text: "No hidden tags.",
+				text: "No hidden tags yet.",
 			});
 			return;
 		}
 
 		for (const tagKey of hiddenTags) {
-			const item = this.hiddenTagsEl.createDiv({ cls: "urso-hidden-tags-item" });
-			item.createDiv({ cls: "urso-hidden-tags-name", text: tagKey });
+			const item = this.listEl.createDiv({ cls: "urso-hidden-tags-item" });
+			const details = item.createDiv({ cls: "urso-hidden-tags-details" });
+			details.createDiv({ cls: "urso-hidden-tags-name", text: tagKey });
+			details.createDiv({
+				cls: "urso-hidden-tags-mode",
+				text: "Hidden from the tag tree.",
+			});
 
-			const removeButton = item.createEl("button", {
-				cls: ["clickable-icon", "urso-hidden-tags-remove"],
+			const actions = item.createDiv({ cls: "urso-hidden-tags-actions" });
+
+			const editButton = actions.createEl("button", {
+				cls: ["clickable-icon", "urso-hidden-tags-action"],
 				attr: {
 					type: "button",
 				},
 			});
-			setIcon(removeButton, "x");
-			removeButton.setAttr("aria-label", `Unhide ${tagKey}`);
+			setIcon(editButton, "pencil");
+			editButton.setAttr("aria-label", `Edit ${tagKey}`);
+			editButton.addEventListener("click", () => {
+				this.openEditor(tagKey);
+			});
+
+			const removeButton = actions.createEl("button", {
+				cls: ["clickable-icon", "urso-hidden-tags-action"],
+				attr: {
+					type: "button",
+				},
+			});
+			setIcon(removeButton, "trash-2");
+			removeButton.setAttr("aria-label", `Remove ${tagKey}`);
 			removeButton.addEventListener("click", () => {
-				void this.plugin.unhideTag(tagKey).then(() => {
+				void this.plugin.removeHiddenTag(tagKey).then(() => {
 					this.renderHiddenTags();
 				});
 			});
 		}
+	}
+
+	private openEditor(initialValue?: string): void {
+		new HiddenTagEditorModal(this.app, this.plugin, {
+			initialValue,
+			onSaved: () => {
+				this.renderHiddenTags();
+			},
+		}).open();
 	}
 }

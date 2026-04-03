@@ -390,24 +390,17 @@
 	color: var(--text-muted);
 }
 
-.urso-hidden-tags-manager {
+.urso-hidden-tags-manager,
+.urso-hidden-tags-editor {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
 }
 
-.urso-hidden-tags-search-row {
+.urso-hidden-tags-toolbar,
+.urso-hidden-tags-editor-actions {
 	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.urso-hidden-tags-search {
-	flex: 1 1 auto;
-}
-
-.urso-hidden-tags-search input {
-	width: 100%;
+	justify-content: flex-end;
 }
 
 .urso-hidden-tags-list {
@@ -422,20 +415,42 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 8px;
-	padding: 8px 10px;
+	gap: 12px;
+	padding: 10px 12px;
 	border-radius: 8px;
 	background: var(--background-primary-alt);
 }
 
-.urso-hidden-tags-name {
+.urso-hidden-tags-details {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+
+.urso-hidden-tags-name,
+.urso-hidden-tags-mode {
 	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-.urso-hidden-tags-remove {
+.urso-hidden-tags-name {
+	font-weight: 600;
+}
+
+.urso-hidden-tags-mode {
+	margin-top: 4px;
+	font-size: 0.8rem;
+	color: var(--text-muted);
+}
+
+.urso-hidden-tags-actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.urso-hidden-tags-action {
 	width: 22px;
 	height: 22px;
 	padding: 0;
@@ -443,7 +458,7 @@
 	color: var(--text-muted);
 }
 
-.urso-hidden-tags-remove:hover {
+.urso-hidden-tags-action:hover {
 	color: var(--text-normal);
 }
 

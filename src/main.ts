@@ -108,6 +108,7 @@ export default class UrsoPlugin extends Plugin {
 		this.settings = {
 			...DEFAULT_SETTINGS,
 			...loadedData,
+			hiddenTags: this.normalizeHiddenTags(loadedData.hiddenTags),
 			primaryViewMode: this.normalizePrimaryViewMode(loadedData.primaryViewMode),
 			trackedProperties: this.normalizeTrackedProperties(loadedData.trackedProperties),
 		};
@@ -145,6 +146,10 @@ export default class UrsoPlugin extends Plugin {
 		const tagKeys = new Set<string>();
 		this.collectTagKeys(this.index.tagTree, tagKeys, { includeSpecial: false });
 		return Array.from(tagKeys).sort((left, right) => left.localeCompare(right));
+	}
+
+	getHiddenTags(): string[] {
+		return [...this.settings.hiddenTags];
 	}
 
 	getTrackedProperties(): TrackedPropertySetting[] {
@@ -187,21 +192,53 @@ export default class UrsoPlugin extends Plugin {
 	}
 
 	async hideTag(tagKey: string): Promise<void> {
-		if (this.isTagHidden(tagKey)) {
-			return;
-		}
-
-		this.settings.hiddenTags = [...this.settings.hiddenTags, tagKey];
-		await this.saveSettings();
-		this.refreshViews();
+		await this.upsertHiddenTag(tagKey);
 	}
 
 	async unhideTag(tagKey: string): Promise<void> {
-		if (!this.isTagHidden(tagKey)) {
+		await this.removeHiddenTag(tagKey);
+	}
+
+	async upsertHiddenTag(nextTagKey: string, previousTagKey?: string): Promise<boolean> {
+		const tagKey = this.normalizeHiddenTagKey(nextTagKey);
+		if (!tagKey) {
+			new Notice("Enter a valid tag name.");
+			return false;
+		}
+
+		const previousNormalizedTagKey = previousTagKey ? this.normalizeHiddenTagKey(previousTagKey) : null;
+		const nextHiddenTags: string[] = [];
+		let didReplace = false;
+
+		for (const hiddenTag of this.settings.hiddenTags) {
+			if (hiddenTag === tagKey || (previousNormalizedTagKey && hiddenTag === previousNormalizedTagKey)) {
+				if (!didReplace) {
+					nextHiddenTags.push(tagKey);
+					didReplace = true;
+				}
+				continue;
+			}
+
+			nextHiddenTags.push(hiddenTag);
+		}
+
+		if (!didReplace) {
+			nextHiddenTags.push(tagKey);
+		}
+
+		this.settings.hiddenTags = this.normalizeHiddenTags(nextHiddenTags);
+		await this.saveSettings();
+		this.refreshViews();
+		return true;
+	}
+
+	async removeHiddenTag(tagKey: string): Promise<void> {
+		const normalizedTagKey = this.normalizeHiddenTagKey(tagKey);
+		if (!normalizedTagKey) {
 			return;
 		}
 
-		this.settings.hiddenTags = this.settings.hiddenTags.filter((entry) => entry !== tagKey);
+		this.settings.hiddenTags = this.settings.hiddenTags.filter((entry) => entry !== normalizedTagKey);
 		await this.saveSettings();
 		this.refreshViews();
 	}
@@ -707,8 +744,6 @@ export default class UrsoPlugin extends Plugin {
 		this.collectTagKeys(this.index.tagTree, validTagKeys);
 		const validPropertyKeys = new Set<string>();
 		this.collectPropertyKeys(this.index.propertyTree, validPropertyKeys);
-		const validHideableTagKeys = new Set<string>();
-		this.collectTagKeys(this.index.tagTree, validHideableTagKeys, { includeSpecial: false });
 		const validNotePaths = new Set(this.app.vault.getMarkdownFiles().map((file) => file.path));
 
 		let didChange = false;
@@ -757,18 +792,6 @@ export default class UrsoPlugin extends Plugin {
 			nextPinnedProperties.push(propertyKey);
 		}
 
-		const nextHiddenTags: string[] = [];
-		const seenHiddenTags = new Set<string>();
-		for (const tagKey of this.settings.hiddenTags) {
-			if (!validHideableTagKeys.has(tagKey) || seenHiddenTags.has(tagKey)) {
-				didChange = true;
-				continue;
-			}
-
-			seenHiddenTags.add(tagKey);
-			nextHiddenTags.push(tagKey);
-		}
-
 		const nextPinnedNotes: Record<string, string[]> = {};
 		for (const [tagKey, filePaths] of Object.entries(this.settings.pinnedNotes)) {
 			if (!validTagKeys.has(tagKey)) {
@@ -814,7 +837,6 @@ export default class UrsoPlugin extends Plugin {
 		this.settings.noteIcons = nextNoteIcons;
 		this.settings.propertyIcons = nextPropertyIcons;
 		this.settings.tagIcons = nextTagIcons;
-		this.settings.hiddenTags = nextHiddenTags;
 		this.settings.pinnedProperties = nextPinnedProperties;
 		this.settings.pinnedTags = nextPinnedTags;
 		this.settings.pinnedNotes = nextPinnedNotes;
@@ -844,6 +866,26 @@ export default class UrsoPlugin extends Plugin {
 
 	private normalizePrimaryViewMode(rawPrimaryViewMode: unknown): PrimaryViewMode {
 		return rawPrimaryViewMode === "properties" ? "properties" : "tags";
+	}
+
+	private normalizeHiddenTags(rawHiddenTags: unknown): string[] {
+		if (!Array.isArray(rawHiddenTags)) {
+			return [...DEFAULT_SETTINGS.hiddenTags];
+		}
+
+		const hiddenTags: string[] = [];
+		const seenHiddenTags = new Set<string>();
+		for (const rawHiddenTag of rawHiddenTags) {
+			const hiddenTag = this.normalizeHiddenTagKey(rawHiddenTag);
+			if (!hiddenTag || seenHiddenTags.has(hiddenTag)) {
+				continue;
+			}
+
+			seenHiddenTags.add(hiddenTag);
+			hiddenTags.push(hiddenTag);
+		}
+
+		return hiddenTags.sort((left, right) => left.localeCompare(right, undefined, { sensitivity: "base" }));
 	}
 
 	private normalizeTrackedProperties(rawTrackedProperties: unknown): TrackedPropertySetting[] {
@@ -878,6 +920,28 @@ export default class UrsoPlugin extends Plugin {
 	private isTrackablePropertyKey(propertyKey: string): boolean {
 		const trimmedKey = propertyKey.trim();
 		return Boolean(trimmedKey) && trimmedKey !== "tags" && trimmedKey !== "position";
+	}
+
+	private normalizeHiddenTagKey(rawTagKey: unknown): string | null {
+		if (typeof rawTagKey !== "string") {
+			return null;
+		}
+
+		const strippedTag = rawTagKey.replace(/^#/, "").trim();
+		if (!strippedTag) {
+			return null;
+		}
+
+		const parts = strippedTag
+			.split("/")
+			.map((part) => part.trim())
+			.filter(Boolean);
+
+		if (parts.length === 0) {
+			return null;
+		}
+
+		return parts.join("/");
 	}
 
 	private getNoteDateTimestamp(file: TFile): number {

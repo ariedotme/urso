@@ -325,11 +325,7 @@ export class UrsoView extends ItemView {
 		}
 
 		row.addEventListener("click", () => {
-			this.selectedTagKey = node.key;
-			if (this.usesSinglePaneLayout()) {
-				this.mobilePane = "notes";
-			}
-			this.render();
+			this.selectPrimaryNode("tags", node.key);
 		});
 
 		row.addEventListener("contextmenu", (event) => {
@@ -388,11 +384,7 @@ export class UrsoView extends ItemView {
 		}
 
 		row.addEventListener("click", () => {
-			this.selectedPropertyKey = node.key;
-			if (this.usesSinglePaneLayout()) {
-				this.mobilePane = "notes";
-			}
-			this.render();
+			this.selectPrimaryNode("properties", node.key);
 		});
 
 		row.addEventListener("contextmenu", (event) => {
@@ -787,6 +779,30 @@ export class UrsoView extends ItemView {
 		this.render();
 	}
 
+	private selectPrimaryNode(mode: PrimaryViewMode, key: string): void {
+		this.setSelectedKeyForMode(mode, key);
+		if (this.usesSinglePaneLayout()) {
+			this.mobilePane = "notes";
+		}
+
+		this.render();
+
+		if (!this.plugin.settings.focusFirstNoteOnEnter) {
+			return;
+		}
+
+		const files =
+			mode === "tags"
+				? this.getOrderedFilesForTag(key)
+				: this.getOrderedFilesForProperty(key);
+		const firstFile = files[0];
+		if (!firstFile) {
+			return;
+		}
+
+		void this.openFile(firstFile);
+	}
+
 	private getOrderedTagNodes(nodes: TagNode[]): TagNode[] {
 		if (nodes.length <= 1) {
 			return nodes;
@@ -1077,6 +1093,8 @@ export class UrsoView extends ItemView {
 				: this.app.workspace.getLeaf("tab");
 
 		await targetLeaf.openFile(file);
+		this.app.workspace.setActiveLeaf(targetLeaf, { focus: true });
+		await this.app.workspace.revealLeaf(targetLeaf);
 	}
 
 	private openTagContextMenu(event: MouseEvent, node: TagNode): void {
